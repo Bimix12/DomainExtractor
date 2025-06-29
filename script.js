@@ -22,73 +22,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Tab Switching Logic ---
     function showSection(sectionToShow, tabToActivate) {
-        // Hide all sections
+        // Hide all sections and deactivate all tabs
         document.querySelectorAll('.tool-section').forEach(section => {
             section.classList.add('hidden');
-            section.style.opacity = 0; // Reset opacity for hidden sections
+            section.style.opacity = 0;
         });
-        // Deactivate all tabs
         document.querySelectorAll('.border-b-2').forEach(tab => {
             tab.classList.remove('active-tab');
         });
 
-        // Show the selected section
+        // Show the selected section and activate the tab
         sectionToShow.classList.remove('hidden');
-        // Small delay to allow CSS transition, then set opacity
-        setTimeout(() => {
+        setTimeout(() => { // Small delay for CSS transition
             sectionToShow.style.opacity = 1;
-        }, 10); // 10ms delay
-        // Activate the selected tab
+        }, 10);
         tabToActivate.classList.add('active-tab');
     }
 
-    // Event Listeners for Tabs
+    // Attach event listeners for tab buttons
     extractorTab.addEventListener('click', () => {
         showSection(extractorSection, extractorTab);
     });
-
     converterTab.addEventListener('click', () => {
         showSection(converterSection, converterTab);
     });
 
-    ---
-
-    // --- Common Copy Function (reusable for both tools) ---
-    // This is the core function for copying text.
+    // --- Common Copy Function ---
+    // This is the robust copy function using Clipboard API with a fallback.
     async function copyToClipboard(textToCopy, alertMessage) {
-        // 1. Check if the modern Clipboard API is supported and available
+        if (!textToCopy.trim()) { // Check if there's actual text to copy
+            alert('Nothing to copy!');
+            return;
+        }
+
         if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
-                // Attempt to copy using the modern asynchronous API
                 await navigator.clipboard.writeText(textToCopy);
                 alert(alertMessage || 'Copied to clipboard successfully!');
             } catch (err) {
-                // If there's an error with the modern API (e.g., permissions denied)
-                console.error('Failed to copy text using Clipboard API:', err);
-                // Fallback to the old method if the modern one fails
+                console.error('Failed to copy using Clipboard API:', err);
                 fallbackCopyToClipboard(textToCopy, alertMessage);
             }
         } else {
-            // 2. If modern Clipboard API is not supported at all, directly use fallback
-            console.warn('Clipboard API not supported, falling back to old method.');
+            console.warn('Clipboard API not supported, using fallback.');
             fallbackCopyToClipboard(textToCopy, alertMessage);
         }
     }
 
-    // --- Fallback Copy Function for older browsers or failed modern API ---
+    // --- Fallback Copy Function for older browsers/failures ---
     function fallbackCopyToClipboard(textToCopy, alertMessage) {
         const tempTextArea = document.createElement('textarea');
         tempTextArea.value = textToCopy;
-        // Make the textarea invisible and place it off-screen to avoid visual disruption
         tempTextArea.style.position = 'absolute';
         tempTextArea.style.left = '-9999px';
         tempTextArea.style.top = '-9999px';
-        tempTextArea.style.opacity = '0'; // Ensure it's invisible
-        document.body.appendChild(tempTextArea); // Append it to the body
+        tempTextArea.style.opacity = '0';
+        document.body.appendChild(tempTextArea);
 
         try {
-            tempTextArea.select(); // Select the text in the temporary textarea
-            // Attempt to execute the old copy command
+            tempTextArea.select();
             const successful = document.execCommand('copy');
             if (successful) {
                 alert(alertMessage ? `${alertMessage} (using fallback)` : 'Copied to clipboard (fallback)!');
@@ -99,23 +91,20 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Fallback copy command failed:', err);
             alert('Copying is not supported in this browser. Please copy manually.');
         } finally {
-            // Always remove the temporary textarea from the DOM
             document.body.removeChild(tempTextArea);
         }
     }
 
-    ---
-
     // --- Domain Extractor Logic ---
     function extractDomains(text) {
-        // Regex to find basic domain names. Adjust if more complex patterns are needed.
-        const domainRegex = /([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:\b|\/)/g;
-        let matches = new Set(); // Use Set to store unique domains
+        // This regex looks for common domain patterns.
+        const domainRegex = /([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:\b|\/|$)/g; // Added |$ for end of string
+        let matches = new Set();
         let match;
 
         while ((match = domainRegex.exec(text)) !== null) {
             let domain = match[1];
-            // Simple cleanup to remove trailing slashes or ports if present
+            // Clean up any trailing slashes or ports
             if (domain.includes('/')) {
                 domain = domain.split('/')[0];
             }
@@ -124,22 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             matches.add(domain);
         }
-        return Array.from(matches).join('\n'); // Return unique domains, each on a new line
+        return Array.from(matches).join('\n');
     }
 
-    // Event listener for "Extract Domains" button
+    // Attach event listener for "Extract Domains" button
     extractButton.addEventListener('click', () => {
         const text = inputText.value;
         const domains = extractDomains(text);
         outputDomains.value = domains;
     });
 
-    // Event listener for "Copy Domains" button (Extractor section)
+    // Attach event listener for "Copy Domains" button (Extractor)
     copyExtractedButton.addEventListener('click', () => {
         copyToClipboard(outputDomains.value, 'Extracted domains copied!');
     });
-
-    ---
 
     // --- Domain Converter Logic ---
     function convertDomainsLogic() {
@@ -162,4 +149,44 @@ document.addEventListener('DOMContentLoaded', () => {
         let results = [];
 
         for (const domain of lines) {
-            // Only process domains
+            // Only process domains that end with '.com'
+            if (domain.endsWith('.com')) {
+                const base = domain.replace(/\.com$/, ''); // Remove the .com part
+                tlds.forEach(ext => {
+                    results.push(base + ext); // Add domain with new extension
+                });
+            }
+        }
+
+        converterResultOutput.value = results.join("\n");
+        converterResultSection.classList.remove("hidden"); // Show results section
+    }
+
+    // Attach event listener for "Convert" button (Converter)
+    convertButton.addEventListener('click', convertDomainsLogic);
+
+    // Attach event listener for "Copy" button (Converter)
+    copyConvertedButton.addEventListener('click', () => {
+        copyToClipboard(converterResultOutput.value, 'Converted domains copied!');
+    });
+
+    // Attach event listener for "Download CSV" button (Converter)
+    downloadCSVButton.addEventListener('click', () => {
+        const result = converterResultOutput.value;
+        if (!result.trim()) { // Check if there's actual content to download
+            alert('No domains to download!');
+            return;
+        }
+        const blob = new Blob([result], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'converted_domains.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // --- Initialization ---
+    // Set the initial active tab and section when the page loads
+    showSection(extractorSection, extractorTab);
+});
