@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Elements for Domain Converter ---
     const domainInput = document.getElementById('domainInput');
     const extCheckboxes = document.querySelectorAll('.extCheckbox');
-    const convertButton = document.getElementById('convertButton');
+    const convertButton = document.getElementById('convertButton'); // هذا هو الزر لي ما كانش مربوط مزيان
     const converterResultSection = document.getElementById('converterResultSection');
     const converterResultOutput = document.getElementById('converterResultOutput');
     const copyConvertedButton = document.getElementById('copyConvertedButton');
@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide all sections
         document.querySelectorAll('.tool-section').forEach(section => {
             section.classList.add('hidden');
+            section.style.opacity = 0; // Reset opacity for hidden sections
         });
         // Deactivate all tabs
         document.querySelectorAll('.border-b-2').forEach(tab => {
@@ -59,10 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to copy. Please copy manually.');
             }
         } else {
-            // Fallback for older browsers (less reliable)
-            // You might need to make the textarea visible/selectable temporarily for this to work
+            // Fallback for older browsers (less reliable, but better than nothing)
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = textToCopy;
+            tempTextArea.style.position = 'fixed'; // Avoid scrolling
+            tempTextArea.style.opacity = 0; // Make it invisible
             document.body.appendChild(tempTextArea);
             tempTextArea.select();
             try {
@@ -107,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Domain Converter Logic ---
-    function convertDomains() {
+    function convertDomainsFunction() { // Non-conflicting function name
         const input = domainInput.value.trim();
         const tlds = Array.from(extCheckboxes)
                          .filter(cb => cb.checked)
@@ -139,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         converterResultSection.classList.remove("hidden");
     }
 
-    convertButton.addEventListener('click', convertDomains); // Link the convert button
+    // --- FIX: Add event listener for the convert button ---
+    convertButton.addEventListener('click', convertDomainsFunction); // ربط الزر بالدالة الصحيحة
 
     copyConvertedButton.addEventListener('click', () => {
         copyToClipboard(converterResultOutput.value, 'Converted domains copied!');
