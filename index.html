@@ -3,29 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Domain Extractor</title>
+  <title>Domain Tools</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
-  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-3xl">
-    <h1 class="text-2xl font-bold mb-4 text-center">Domain Extractor</h1>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Domain Tools</h1>
 
-    <label class="block mb-2 font-semibold">Paste your text below:</label>
-    <textarea id="inputText" class="w-full h-40 p-3 border rounded-md mb-4" placeholder="Paste your text here..."></textarea>
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6">
+      <button onclick="switchTab('extract')" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded">Extract Domains</button>
+      <button onclick="switchTab('convert')" class="tab-btn bg-gray-200 text-black px-4 py-2 rounded">Convert Extensions</button>
+    </div>
 
-    <button onclick="extractDomains()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4">
-      Extract Domains
-    </button>
+    <!-- Extract Tab -->
+    <div id="extractTab">
+      <label class="block mb-2 font-medium">Paste your text:</label>
+      <textarea id="inputText" rows="8" class="w-full p-3 border rounded-lg mb-4" placeholder="Paste any text here..."></textarea>
 
-    <label class="block mb-2 font-semibold">Extracted Domains:</label>
-    <textarea id="outputText" class="w-full h-40 p-3 border rounded-md mb-4" readonly></textarea>
+      <button onclick="extractDomains()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Extract Domains</button>
 
-    <button onclick="copyToClipboard()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
-      Copy to Clipboard
-    </button>
+      <div class="mt-6">
+        <h2 class="text-xl font-semibold mb-2">Extracted Domains:</h2>
+        <textarea id="outputText" rows="10" class="w-full p-3 border rounded-lg mb-4" readonly></textarea>
+        <button onclick="copyToClipboard()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Copy</button>
+      </div>
+    </div>
+
+    <!-- Convert Tab -->
+    <div id="convertTab" class="hidden">
+      <label class="block mb-2 font-medium">Paste .com domains (one per line):</label>
+      <textarea id="domainInput" rows="8" class="w-full p-3 border rounded-lg mb-4" placeholder="example.com&#10;test.com"></textarea>
+
+      <label class="block mb-2 font-medium">Choose extensions to convert to:</label>
+      <div class="flex flex-wrap gap-4 mb-4">
+        <label><input type="checkbox" class="extCheckbox" value=".net" checked> .net</label>
+        <label><input type="checkbox" class="extCheckbox" value=".co" checked> .co</label>
+        <label><input type="checkbox" class="extCheckbox" value=".co.in"> .co.in</label>
+        <label><input type="checkbox" class="extCheckbox" value=".in"> .in</label>
+        <label><input type="checkbox" class="extCheckbox" value=".us"> .us</label>
+      </div>
+
+      <button onclick="convertDomains()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Convert</button>
+
+      <div id="resultSection" class="mt-6 hidden">
+        <h2 class="text-xl font-semibold mb-2">Converted Domains:</h2>
+        <textarea id="resultOutput" rows="10" class="w-full p-3 border rounded-lg mb-4" readonly></textarea>
+        <div class="flex gap-4">
+          <button onclick="copyResults()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Copy</button>
+          <button onclick="downloadCSV()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Download CSV</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
+    function switchTab(tab) {
+      document.getElementById('extractTab').classList.add('hidden');
+      document.getElementById('convertTab').classList.add('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+      if (tab === 'extract') {
+        document.getElementById('extractTab').classList.remove('hidden');
+        document.querySelectorAll('.tab-btn')[0].classList.add('bg-blue-600', 'text-white');
+      } else {
+        document.getElementById('convertTab').classList.remove('hidden');
+        document.querySelectorAll('.tab-btn')[1].classList.add('bg-blue-600', 'text-white');
+      }
+    }
+
     function extractDomains() {
       const text = document.getElementById("inputText").value;
       const domainRegex = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})\b/gi;
@@ -37,9 +82,56 @@
     function copyToClipboard() {
       const output = document.getElementById("outputText");
       output.select();
-      output.setSelectionRange(0, 99999);
       document.execCommand("copy");
       alert("Copied to clipboard!");
+    }
+
+    function convertDomains() {
+      const input = document.getElementById('domainInput').value.trim();
+      const tlds = Array.from(document.querySelectorAll('.extCheckbox:checked')).map(cb => cb.value);
+      const resultOutput = document.getElementById('resultOutput');
+      const resultSection = document.getElementById('resultSection');
+
+      if (!input) {
+        alert('Please enter at least one .com domain.');
+        return;
+      }
+
+      if (tlds.length === 0) {
+        alert('Please select at least one extension.');
+        return;
+      }
+
+      const lines = input.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      let results = [];
+
+      for (const domain of lines) {
+        if (domain.endsWith('.com')) {
+          const base = domain.replace(/\.com$/, '');
+          tlds.forEach(ext => {
+            results.push(base + ext);
+          });
+        }
+      }
+
+      resultOutput.value = results.join("\n");
+      resultSection.classList.remove("hidden");
+    }
+
+    function copyResults() {
+      const resultOutput = document.getElementById('resultOutput');
+      resultOutput.select();
+      document.execCommand('copy');
+      alert('Copied to clipboard!');
+    }
+
+    function downloadCSV() {
+      const result = document.getElementById('resultOutput').value;
+      const blob = new Blob([result], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'converted_domains.csv';
+      link.click();
     }
   </script>
 </body>
