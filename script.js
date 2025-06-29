@@ -5,20 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputDomains = document.getElementById('outputDomains');
     const copyButton = document.getElementById('copyButton');
 
-    // Fonction pour extraire les domaines
+    // Function to extract domains
     function extractDomains(text) {
-        // Cette regex est simplifiée pour trouver les noms de domaine basiques.
-        // Elle cherche des séquences de lettres, chiffres, tirets, suivies d'un point et d'une extension (min 2 lettres).
-        // Elle ne capture pas les protocoles (http/https) ou les sous-domaines complexes.
+        // This regex is simplified to find basic domain names.
+        // It looks for sequences of letters, numbers, hyphens, followed by a dot and an extension (min 2 letters).
+        // It doesn't capture protocols (http/https) or complex subdomains.
         const domainRegex = /([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:\b|\/)/g;
-        let matches = new Set();
+        let matches = new Set(); // Using a Set to avoid duplicate domains
         let match;
 
         while ((match = domainRegex.exec(text)) !== null) {
-            // Assurez-vous d'ajouter uniquement le domaine principal
-            // et de gérer les cas où des chemins suivent le domaine.
+            // Ensure only the main domain is added, and handle cases where paths follow the domain.
             let domain = match[1];
-            // Simple nettoyage pour ne pas inclure de slashs ou de ports accidentels
+            // Simple cleanup to avoid including accidental slashes or ports
             if (domain.includes('/')) {
                 domain = domain.split('/')[0];
             }
@@ -27,17 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             matches.add(domain);
         }
-        return Array.from(matches).join('\n');
+        return Array.from(matches).join('\n'); // Join unique domains with newlines
     }
 
-    // Événement pour le bouton d'extraction (quand on colle le texte)
+    // Event listener for the "Extract Domains" button (for pasted text)
     extractButton.addEventListener('click', () => {
         const text = inputText.value;
         const domains = extractDomains(text);
         outputDomains.value = domains;
     });
 
-    // Événement pour le téléchargement de fichier
+    // Event listener for the file upload input
     fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -47,14 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const domains = extractDomains(text);
                 outputDomains.value = domains;
             };
-            reader.readAsText(file);
+            reader.readAsText(file); // Read the file content as text
         }
     });
 
-    // Événement pour le bouton de copie
+    // Event listener for the "Copy Domains" button
     copyButton.addEventListener('click', () => {
-        outputDomains.select();
-        document.execCommand('copy');
-        alert('Domaines copiés dans le presse-papiers !');
+        outputDomains.select(); // Select the text in the output area
+        document.execCommand('copy'); // Copy the selected text to clipboard
+        alert('Domains copied to clipboard!'); // Notify the user
     });
 });
