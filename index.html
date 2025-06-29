@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extracteur de Domaines</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Extracteur de Domaines</h1>
+
+        <div class="input-section">
+            <h2>Coller votre texte ici :</h2>
+            <textarea id="inputText" placeholder="Collez votre texte ici..."></textarea>
+            <button id="extractButton">Extraire les domaines</button>
+        </div>
+
+        <div class="upload-section">
+            <h2>Ou téléchargez un fichier texte :</h2>
+            <input type="file" id="fileInput" accept=".txt">
+        </div>
+
+        <div class="output-section">
+            <h2>Domaines trouvés :</h2>
+            <textarea id="outputDomains" readonly placeholder="Les domaines apparaîtront ici..."></textarea>
+            <button id="copyButton">Copier les domaines</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
