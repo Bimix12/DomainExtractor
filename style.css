@@ -22,7 +22,7 @@ h1, h2 {
     color: #333;
 }
 
-.input-section, .upload-section, .output-section {
+.input-section, .upload-section, .output-section { /* Keep .upload-section here for now, it won't affect anything */
     margin-bottom: 20px;
     border: 1px solid #ddd;
     padding: 15px;
@@ -37,7 +37,7 @@ textarea {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    resize: vertical; /* Allows vertical resizing */
+    resize: vertical;
     font-size: 16px;
 }
 
@@ -56,7 +56,7 @@ button:hover {
     background-color: #0056b3;
 }
 
-input[type="file"] {
+input[type="file"] { /* This rule will now be unused as there's no file input in HTML */
     margin-top: 10px;
 }
 
