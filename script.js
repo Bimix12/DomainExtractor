@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Elements for Domain Converter ---
     const domainInput = document.getElementById('domainInput');
     const extCheckboxes = document.querySelectorAll('.extCheckbox');
-    const convertButton = document.getElementById('convertButton'); // هذا هو الزر لي ما كانش مربوط مزيان
+    const convertButton = document.getElementById('convertButton');
     const converterResultSection = document.getElementById('converterResultSection');
     const converterResultOutput = document.getElementById('converterResultOutput');
     const copyConvertedButton = document.getElementById('copyConvertedButton');
@@ -34,13 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show the selected section
         sectionToShow.classList.remove('hidden');
-        setTimeout(() => { // Small delay to allow CSS transition
+        // Small delay to allow CSS transition, then set opacity
+        setTimeout(() => {
             sectionToShow.style.opacity = 1;
-        }, 10);
+        }, 10); // 10ms delay
         // Activate the selected tab
         tabToActivate.classList.add('active-tab');
     }
 
+    // Event Listeners for Tabs
     extractorTab.addEventListener('click', () => {
         showSection(extractorSection, extractorTab);
     });
@@ -49,44 +51,71 @@ document.addEventListener('DOMContentLoaded', () => {
         showSection(converterSection, converterTab);
     });
 
+    ---
+
     // --- Common Copy Function (reusable for both tools) ---
+    // This is the core function for copying text.
     async function copyToClipboard(textToCopy, alertMessage) {
+        // 1. Check if the modern Clipboard API is supported and available
         if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
+                // Attempt to copy using the modern asynchronous API
                 await navigator.clipboard.writeText(textToCopy);
-                alert(alertMessage || 'Copied to clipboard!');
+                alert(alertMessage || 'Copied to clipboard successfully!');
             } catch (err) {
-                console.error('Failed to copy text: ', err);
-                alert('Failed to copy. Please copy manually.');
+                // If there's an error with the modern API (e.g., permissions denied)
+                console.error('Failed to copy text using Clipboard API:', err);
+                // Fallback to the old method if the modern one fails
+                fallbackCopyToClipboard(textToCopy, alertMessage);
             }
         } else {
-            // Fallback for older browsers (less reliable, but better than nothing)
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = textToCopy;
-            tempTextArea.style.position = 'fixed'; // Avoid scrolling
-            tempTextArea.style.opacity = 0; // Make it invisible
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            try {
-                document.execCommand('copy');
-                alert(alertMessage ? `${alertMessage} (fallback)` : 'Copied to clipboard (fallback)!');
-            } catch (err) {
-                console.error('Fallback copy failed: ', err);
-                alert('Copying is not supported in this browser. Please copy manually.');
-            } finally {
-                document.body.removeChild(tempTextArea); // Clean up
-            }
+            // 2. If modern Clipboard API is not supported at all, directly use fallback
+            console.warn('Clipboard API not supported, falling back to old method.');
+            fallbackCopyToClipboard(textToCopy, alertMessage);
         }
     }
 
+    // --- Fallback Copy Function for older browsers or failed modern API ---
+    function fallbackCopyToClipboard(textToCopy, alertMessage) {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = textToCopy;
+        // Make the textarea invisible and place it off-screen to avoid visual disruption
+        tempTextArea.style.position = 'absolute';
+        tempTextArea.style.left = '-9999px';
+        tempTextArea.style.top = '-9999px';
+        tempTextArea.style.opacity = '0'; // Ensure it's invisible
+        document.body.appendChild(tempTextArea); // Append it to the body
+
+        try {
+            tempTextArea.select(); // Select the text in the temporary textarea
+            // Attempt to execute the old copy command
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert(alertMessage ? `${alertMessage} (using fallback)` : 'Copied to clipboard (fallback)!');
+            } else {
+                alert('Copy failed. Please copy manually.');
+            }
+        } catch (err) {
+            console.error('Fallback copy command failed:', err);
+            alert('Copying is not supported in this browser. Please copy manually.');
+        } finally {
+            // Always remove the temporary textarea from the DOM
+            document.body.removeChild(tempTextArea);
+        }
+    }
+
+    ---
+
     // --- Domain Extractor Logic ---
     function extractDomains(text) {
+        // Regex to find basic domain names. Adjust if more complex patterns are needed.
         const domainRegex = /([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:\b|\/)/g;
-        let matches = new Set();
+        let matches = new Set(); // Use Set to store unique domains
         let match;
 
         while ((match = domainRegex.exec(text)) !== null) {
             let domain = match[1];
+            // Simple cleanup to remove trailing slashes or ports if present
             if (domain.includes('/')) {
                 domain = domain.split('/')[0];
             }
@@ -95,21 +124,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             matches.add(domain);
         }
-        return Array.from(matches).join('\n');
+        return Array.from(matches).join('\n'); // Return unique domains, each on a new line
     }
 
+    // Event listener for "Extract Domains" button
     extractButton.addEventListener('click', () => {
         const text = inputText.value;
         const domains = extractDomains(text);
         outputDomains.value = domains;
     });
 
+    // Event listener for "Copy Domains" button (Extractor section)
     copyExtractedButton.addEventListener('click', () => {
         copyToClipboard(outputDomains.value, 'Extracted domains copied!');
     });
 
+    ---
+
     // --- Domain Converter Logic ---
-    function convertDomainsFunction() { // Non-conflicting function name
+    function convertDomainsLogic() {
         const input = domainInput.value.trim();
         const tlds = Array.from(extCheckboxes)
                          .filter(cb => cb.checked)
@@ -129,34 +162,4 @@ document.addEventListener('DOMContentLoaded', () => {
         let results = [];
 
         for (const domain of lines) {
-            if (domain.endsWith('.com')) {
-                const base = domain.replace(/\.com$/, '');
-                tlds.forEach(ext => {
-                    results.push(base + ext);
-                });
-            }
-        }
-
-        converterResultOutput.value = results.join("\n");
-        converterResultSection.classList.remove("hidden");
-    }
-
-    // --- FIX: Add event listener for the convert button ---
-    convertButton.addEventListener('click', convertDomainsFunction); // ربط الزر بالدالة الصحيحة
-
-    copyConvertedButton.addEventListener('click', () => {
-        copyToClipboard(converterResultOutput.value, 'Converted domains copied!');
-    });
-
-    downloadCSVButton.addEventListener('click', () => {
-        const result = converterResultOutput.value;
-        const blob = new Blob([result], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'converted_domains.csv';
-        link.click();
-    });
-
-    // Initialize: Show the extractor section by default
-    showSection(extractorSection, extractorTab);
-});
+            // Only process domains
