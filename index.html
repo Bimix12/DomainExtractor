@@ -1,65 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain Tools</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Domain Extractor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-md">
-        <h1 class="text-3xl font-bold mb-6 text-center">Domain Tools</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-3xl">
+    <h1 class="text-2xl font-bold mb-4 text-center">Domain Extractor</h1>
 
-        <div class="flex justify-center mb-6 border-b border-gray-200">
-            <button id="extractorTab" class="px-6 py-3 text-lg font-medium text-gray-700 border-b-2 border-transparent hover:border-blue-600 hover:text-blue-600 focus:outline-none">Domain Extractor</button>
-            <button id="converterTab" class="ml-4 px-6 py-3 text-lg font-medium text-gray-700 border-b-2 border-transparent hover:border-blue-600 hover:text-blue-600 focus:outline-none">Domain Converter</button>
-        </div>
+    <label class="block mb-2 font-semibold">Paste your text below:</label>
+    <textarea id="inputText" class="w-full h-40 p-3 border rounded-md mb-4" placeholder="Paste your text here..."></textarea>
 
-        <div id="extractorSection" class="tool-section">
-            <h2 class="text-2xl font-semibold mb-4 text-center">Domain Extractor</h2>
+    <button onclick="extractDomains()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4">
+      Extract Domains
+    </button>
 
-            <div class="input-section">
-                <label class="block mb-2 font-medium">Paste your text here:</label>
-                <textarea id="inputText" placeholder="Paste your text here..." rows="10" class="w-full p-3 border rounded-lg mb-4"></textarea>
-                <button id="extractButton" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 w-full md:w-auto">Extract Domains</button>
-            </div>
+    <label class="block mb-2 font-semibold">Extracted Domains:</label>
+    <textarea id="outputText" class="w-full h-40 p-3 border rounded-md mb-4" readonly></textarea>
 
-            <div class="output-section mt-6">
-                <h2 class="text-xl font-semibold mb-2">Found Domains:</h2>
-                <textarea id="outputDomains" readonly placeholder="Extracted domains will appear here..." rows="10" class="w-full p-3 border rounded-lg mb-4"></textarea>
-                <button id="copyExtractedButton" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full md:w-auto">Copy Domains</button>
-            </div>
-        </div>
+    <button onclick="copyToClipboard()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
+      Copy to Clipboard
+    </button>
+  </div>
 
-        <div id="converterSection" class="tool-section hidden">
-            <h2 class="text-2xl font-semibold mb-4 text-center">Domain Extension Converter</h2>
+  <script>
+    function extractDomains() {
+      const text = document.getElementById("inputText").value;
+      const domainRegex = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,})\b/gi;
+      const domains = text.match(domainRegex);
+      const unique = [...new Set(domains || [])];
+      document.getElementById("outputText").value = unique.join("\n");
+    }
 
-            <label class="block mb-2 font-medium">Paste .com domains (one per line):</label>
-            <textarea id="domainInput" rows="8" class="w-full p-3 border rounded-lg mb-4" placeholder="example.com&#10;test.com"></textarea>
-
-            <label class="block mb-2 font-medium">Choose extensions to convert to:</label>
-            <div class="flex flex-wrap gap-4 mb-4">
-                <label><input type="checkbox" class="extCheckbox" value=".net" checked> .net</label>
-                <label><input type="checkbox" class="extCheckbox" value=".co" checked> .co</label>
-                <label><input type="checkbox" class="extCheckbox" value=".co.in"> .co.in</label>
-                <label><input type="checkbox" class="extCheckbox" value=".in"> .in</label>
-                <label><input type="checkbox" class="extCheckbox" value=".us"> .us</label>
-            </div>
-
-            <button id="convertButton" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 w-full md:w-auto">Convert</button>
-
-            <div id="converterResultSection" class="mt-6 hidden">
-                <h2 class="text-xl font-semibold mb-2">Converted Domains:</h2>
-                <textarea id="converterResultOutput" rows="10" class="w-full p-3 border rounded-lg mb-4" readonly></textarea>
-                <div class="flex gap-4 flex-wrap">
-                    <button id="copyConvertedButton" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full md:w-auto">Copy</button>
-                    <button id="downloadCSVButton" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 w-full md:w-auto">Download CSV</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
+    function copyToClipboard() {
+      const output = document.getElementById("outputText");
+      output.select();
+      output.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("Copied to clipboard!");
+    }
+  </script>
 </body>
 </html>
