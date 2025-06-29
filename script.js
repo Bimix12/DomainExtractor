@@ -1,11 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     const inputText = document.getElementById('inputText');
-    // const fileInput = document.getElementById('fileInput'); // Removed
     const extractButton = document.getElementById('extractButton');
     const outputDomains = document.getElementById('outputDomains');
     const copyButton = document.getElementById('copyButton');
 
-    // Function to extract domains
+    // Function to extract domains (no change here)
     function extractDomains(text) {
         const domainRegex = /([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(?:\b|\/)/g;
         let matches = new Set();
@@ -24,31 +23,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(matches).join('\n');
     }
 
-    // Event listener for the "Extract Domains" button (for pasted text)
+    // Event listener for the "Extract Domains" button (no change here)
     extractButton.addEventListener('click', () => {
         const text = inputText.value;
         const domains = extractDomains(text);
         outputDomains.value = domains;
     });
 
-    // Event listener for the file upload input - REMOVED
-    // fileInput.addEventListener('change', (event) => {
-    //     const file = event.target.files[0];
-    //     if (file) {
-    //         const reader = new FileReader();
-    //         reader.onload = (e) => {
-    //             const text = e.target.result;
-    //             const domains = extractDomains(text);
-    //             outputDomains.value = domains;
-    //         };
-    //         reader.readAsText(file);
-    //     }
-    // });
-
+    // --- IMPORTANT CHANGE HERE ---
     // Event listener for the "Copy Domains" button
-    copyButton.addEventListener('click', () => {
-        outputDomains.select();
-        document.execCommand('copy');
-        alert('Domains copied to clipboard!');
+    copyButton.addEventListener('click', async () => { // Added 'async' keyword
+        const textToCopy = outputDomains.value;
+
+        // Check if the Clipboard API is available in the browser
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                alert('Domains copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy domains. Please copy manually.');
+            }
+        } else {
+            // Fallback for older browsers (though less reliable)
+            outputDomains.select();
+            try {
+                document.execCommand('copy');
+                alert('Domains copied to clipboard (fallback)!');
+            } catch (err) {
+                console.error('Fallback copy failed: ', err);
+                alert('Copying is not supported in this browser. Please copy manually.');
+            }
+        }
     });
 });
