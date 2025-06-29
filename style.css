@@ -37,7 +37,7 @@ textarea {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    resize: vertical;
+    resize: vertical; /* Allows vertical resizing */
     font-size: 16px;
 }
 
